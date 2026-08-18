@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CIS Web — F1 Motorsport
 
-## Getting Started
+Centro de operaciones de contenido para F1 Motorsport: gestiona todo el flujo
+idea → estrategia → guion → grabación → edición → calendario → publicación →
+resultados → aprendizajes desde una interfaz visual.
 
-First, run the development server:
+Construido con Next.js 16, Prisma 7 y Postgres (Neon). Completamente separado
+de la Knowledge Base original del CIS — la app solo la usó como fuente inicial
+de datos, nunca la modifica.
+
+## Desarrollo local
 
 ```bash
+npm install
+npx prisma migrate dev   # aplica el schema a la base de datos
+npx tsx prisma/seed.ts   # carga los 12 contenidos iniciales + grupo Audi Q5
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Las variables de entorno (`DATABASE_URL`, `DATABASE_URL_UNPOOLED`) viven en
+`.env.local`, gestionadas por la integración de Neon en Vercel — corre
+`vercel env pull` para sincronizarlas en una máquina nueva.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Secciones
 
-## Learn More
+Dashboard · Contenido · Pipeline · Calendario · Producción · Guiones ·
+Rendimiento · Aprendizajes · Estrategia · Configuración.
 
-To learn more about Next.js, take a look at the following resources:
+## Despliegue
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Conectado a Vercel con auto-deploy: cada push a `master` despliega
+automáticamente a producción.
