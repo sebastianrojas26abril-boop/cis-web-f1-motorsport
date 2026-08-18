@@ -2,9 +2,12 @@
 // Fuente: instrucciones del usuario + verificado contra D:\CLAUDE\files\content-calendar.md
 // y content-strategy.md (no se inventa ningún dato).
 
+import { config as loadEnvLocal } from "dotenv";
+loadEnvLocal({ path: ".env" });
+loadEnvLocal({ path: ".env.local", override: true });
+
 import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import path from "node:path";
+import { PrismaPg } from "@prisma/adapter-pg";
 import {
   DEFAULT_PILLARS,
   DEFAULT_FUNNEL_STAGES,
@@ -15,9 +18,7 @@ import {
   DEFAULT_TONE,
 } from "../src/lib/constants";
 
-const adapter = new PrismaBetterSqlite3({
-  url: path.join(process.cwd(), "prisma", "dev.db"),
-});
+const adapter = new PrismaPg(process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL!);
 const prisma = new PrismaClient({ adapter });
 
 const PILLAR_CASOS = "Casos de servicio";
