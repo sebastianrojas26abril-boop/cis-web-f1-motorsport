@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// PIPELINE / FUNNEL DE CONTENIDO
+// ---------------------------------------------------------------------------
+
+model ContentPiece {
+  id               Int      @id @default(autoincrement())
+  number           Int      @unique
+  title            String
+  hook             String?
+  objective        String?
+  pillar           String
+  funnelStage      String
+  opportunityScore Float?
+  persona          String?
+  caso             String?
+  cta              String?
+  voiceOver        String?
+  onScreenText     String?
+  scriptDevelopment String?
+  editingNotes     String?
+  materials        String?
+  notes            String?
+  status           String   @default("IDEA")
+  publishDate      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  groupId      Int?
+  group        ProductionGroup? @relation(fields: [groupId], references: [id])
+
+  sessionId    Int?
+  session      RecordingSession? @relation(fields: [sessionId], references: [id])
+
+  shots    Shot[]              @relation("ShotToContent")
+  metrics  PerformanceMetric[]
+  learnings Learning[]
+}
+
+// ---------------------------------------------------------------------------
+// PRODUCCIÓN
+// ---------------------------------------------------------------------------
+
+model ProductionGroup {
+  id             Int      @id @default(autoincrement())
+  name           String
+  sharedMaterial String? // texto libre: "Audi Q5, hoja de servicio, scanner, suspensión, frenos"
+  createdAt      DateTime @default(now())
+
+  contentPieces ContentPiece[]
+  sessions      RecordingSession[]
+}
+
+model RecordingSession {
+  id          Int       @id @default(autoincrement())
+  title       String
+  date        DateTime?
+  personas    String? // texto libre, coma-separado
+  autos       String?
+  locaciones  String?
+  materials   String? // texto libre, coma-separado (sugerido automáticamente, editable)
+  status      String    @default("PENDIENTE") // PENDIENTE / GRABADA
+  createdAt   DateTime  @default(now())
+
+  groupId Int?
+  group   ProductionGroup? @relation(fields: [groupId], references: [id])
+
+  contentPieces ContentPiece[]
+  shots         Shot[]
+}
+
+model Shot {
+  id          Int    @id @default(autoincrement())
+  description String
+  status      String @default("PENDIENTE") // PENDIENTE / GRABADA
+
+  sessionId Int?
+  session   RecordingSession? @relation(fields: [sessionId], references: [id])
+
+  contentPieces ContentPiece[] @relation("ShotToContent")
+}
+
+// ---------------------------------------------------------------------------
+// RENDIMIENTO / APRENDIZAJES
+// ---------------------------------------------------------------------------
+
+model PerformanceMetric {
+  id       Int      @id @default(autoincrement())
+  platform String
+  date     DateTime
+
+  views       Int?
+  reach       Int?
+  likes       Int?
+  comments    Int?
+  shares      Int?
+  saves       Int?
+  messages    Int?
+  leads       Int?
+  appointments Int?
+  sales       Int?
+  notes       String?
+
+  createdAt DateTime @default(now())
+
+  contentPieceId Int
+  contentPiece   ContentPiece @relation(fields: [contentPieceId], references: [id], onDelete: Cascade)
+}
+
+model Learning {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+
+  contentPieceId Int?
+  contentPiece   ContentPiece? @relation(fields: [contentPieceId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// ESTRATEGIA (configuración editable, un solo registro)
+// ---------------------------------------------------------------------------
+
+model StrategyConfig {
+  id Int @id @default(1)
+
+  pillars           String // JSON string[]
+  funnelStages      String // JSON string[]
+  objective         String?
+  audience          String?
+  tone              String?
+  restrictions      String?
+  scoreWeights      String // JSON { conversion, retention, attention, interaction, authority }
+  funnelDistribution String // JSON { etapa: piezas }
+
+  updatedAt DateTime @updatedAt
+}
