@@ -217,6 +217,32 @@ export function ContentForm({
         </div>
       </section>
 
+      <section className="card p-5">
+        <SectionTitle>Publicación</SectionTitle>
+        <p className="text-xs mt-1 mb-3" style={{ color: "var(--text-faint)" }}>
+          Pega el link del post publicado una sola vez — el sync de Meta se encarga de traer las
+          métricas solo, desde Rendimiento.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Link de Instagram">
+            <input
+              className="input"
+              placeholder="https://www.instagram.com/p/..."
+              value={form.instagramUrl ?? ""}
+              onChange={(e) => set("instagramUrl", e.target.value)}
+            />
+          </Field>
+          <Field label="Link de Facebook">
+            <input
+              className="input"
+              placeholder="https://www.facebook.com/.../posts/..."
+              value={form.facebookUrl ?? ""}
+              onChange={(e) => set("facebookUrl", e.target.value)}
+            />
+          </Field>
+        </div>
+      </section>
+
       <div className="flex items-center gap-2 sticky bottom-4">
         <button className="btn btn-primary" onClick={save} disabled={isPending}>
           <Save size={14} /> {isPending ? "Guardando…" : saved ? "Guardado ✓" : "Guardar cambios"}

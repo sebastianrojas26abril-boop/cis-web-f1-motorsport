@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Trash2, ChevronDown, ChevronUp, RefreshCw, Zap } from "lucide-react";
 import { NO_DATA } from "@/lib/constants";
 import { fmtDate } from "@/components/ui";
 import { createMetric, deleteMetric, type MetricInput } from "@/lib/actions/performance";
+import { syncMetaNow } from "@/lib/actions/meta";
 
 type Piece = { id: number; number: number; title: string };
 type Metric = MetricInput & {
   id: number;
+  source?: string;
   contentPiece: { id: number; number: number; title: string };
 };
 
@@ -28,14 +31,41 @@ const NUMERIC_FIELDS: { key: keyof MetricInput; label: string }[] = [
 export function PerformanceBoard({
   initialMetrics,
   pieces,
+  metaConnected,
+  lastSyncAt,
 }: {
   initialMetrics: Metric[];
   pieces: Piece[];
+  metaConnected: boolean;
+  lastSyncAt: string | null;
 }) {
+  const router = useRouter();
   const [metrics, setMetrics] = useState(initialMetrics);
   const [open, setOpen] = useState(false);
   const [filterPiece, setFilterPiece] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [isSyncing, startSyncTransition] = useTransition();
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  // router.refresh() re-fetches server data (fresh initialMetrics) after a sync;
+  // local state needs to catch up since useState only reads its initial value once.
+  useEffect(() => {
+    setMetrics(initialMetrics);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMetrics]);
+
+  function syncNow() {
+    setSyncMsg(null);
+    startSyncTransition(async () => {
+      const result = await syncMetaNow();
+      setSyncMsg(
+        result.ok
+          ? `${result.results.filter((r) => r.status === "ok").length} publicaciones actualizadas.`
+          : result.error
+      );
+      router.refresh();
+    });
+  }
 
   const [form, setForm] = useState<Partial<MetricInput>>({
     contentPieceId: pieces[0]?.id,
@@ -75,6 +105,37 @@ export function PerformanceBoard({
 
   return (
     <div className="flex flex-col gap-4">
+      {metaConnected ? (
+        <div className="card p-4 flex flex-wrap items-center gap-3">
+          <Zap size={15} style={{ color: "var(--accent)" }} />
+          <div className="text-[13px]">
+            Instagram y Facebook conectados
+            <span className="ml-1.5" style={{ color: "var(--text-faint)" }}>
+              · última sync: {lastSyncAt ? fmtDate(lastSyncAt) : "nunca"}
+            </span>
+          </div>
+          <div className="flex-1" />
+          {syncMsg && (
+            <span className="text-xs" style={{ color: "var(--text-faint)" }}>
+              {syncMsg}
+            </span>
+          )}
+          <button className="btn btn-secondary" onClick={syncNow} disabled={isSyncing}>
+            <RefreshCw size={13} /> {isSyncing ? "Sincronizando…" : "Sincronizar ahora"}
+          </button>
+        </div>
+      ) : (
+        <div
+          className="card p-4 text-xs flex items-center justify-between gap-3"
+          style={{ color: "var(--text-muted)" }}
+        >
+          Conecta Instagram/Facebook para traer estas métricas automáticamente.
+          <a href="/configuracion" className="btn btn-secondary shrink-0">
+            Conectar en Configuración
+          </a>
+        </div>
+      )}
+
       <div className="card p-4">
         <button className="flex items-center justify-between w-full text-left" onClick={() => setOpen((o) => !o)}>
           <span className="text-sm font-semibold flex items-center gap-2">
@@ -187,6 +248,7 @@ export function PerformanceBoard({
             <tr className="text-left" style={{ borderBottom: "1px solid var(--border)", color: "var(--text-faint)" }}>
               <Th>Contenido</Th>
               <Th>Plataforma</Th>
+              <Th>Fuente</Th>
               <Th>Fecha</Th>
               <Th>Views</Th>
               <Th>Alcance</Th>
@@ -208,6 +270,18 @@ export function PerformanceBoard({
                   #{m.contentPiece.number} {m.contentPiece.title}
                 </Td>
                 <Td>{m.platform}</Td>
+                <Td>
+                  <span
+                    className="badge"
+                    style={
+                      m.source === "META_AUTO"
+                        ? { background: "var(--accent-soft)", color: "var(--accent)" }
+                        : { background: "var(--surface-2)", color: "var(--text-muted)" }
+                    }
+                  >
+                    {m.source === "META_AUTO" ? "Auto" : "Manual"}
+                  </span>
+                </Td>
                 <Td>{fmtDate(m.date)}</Td>
                 <Td className="tabular-nums">{m.views ?? NO_DATA}</Td>
                 <Td className="tabular-nums">{m.reach ?? NO_DATA}</Td>
@@ -228,7 +302,7 @@ export function PerformanceBoard({
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={13} className="text-center py-10" style={{ color: "var(--text-faint)" }}>
+                <td colSpan={15} className="text-center py-10" style={{ color: "var(--text-faint)" }}>
                   Sin datos registrados todavía
                 </td>
               </tr>

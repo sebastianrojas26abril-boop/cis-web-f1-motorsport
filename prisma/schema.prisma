@@ -37,6 +37,13 @@ model ContentPiece {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  // Enlace al post publicado real, pegado una sola vez. A partir de ahí el
+  // sync automático de Meta resuelve el ID interno y refresca métricas solo.
+  instagramUrl      String?
+  instagramMediaId  String?
+  facebookUrl       String?
+  facebookPostId    String?
+
   groupId      Int?
   group        ProductionGroup? @relation(fields: [groupId], references: [id])
 
@@ -112,6 +119,7 @@ model PerformanceMetric {
   sales       Int?
   notes       String?
 
+  source    String   @default("MANUAL") // MANUAL | META_AUTO
   createdAt DateTime @default(now())
 
   contentPieceId Int
@@ -126,6 +134,28 @@ model Learning {
 
   contentPieceId Int?
   contentPiece   ContentPiece? @relation(fields: [contentPieceId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// INTEGRACIÓN META (Instagram + Facebook comparten la misma cuenta conectada)
+// ---------------------------------------------------------------------------
+
+model MetaConnection {
+  id Int @id @default(1)
+
+  pageId           String
+  pageName         String?
+  pageAccessToken  String // token de página de larga duración (~60 días)
+  tokenExpiresAt   DateTime?
+
+  instagramBusinessId String?
+  instagramUsername   String?
+
+  lastSyncAt    DateTime?
+  lastSyncError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------

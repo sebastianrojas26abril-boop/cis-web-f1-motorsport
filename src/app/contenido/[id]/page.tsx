@@ -51,6 +51,8 @@ export default async function ContentDetailPage({
     notes: piece.notes,
     status: piece.status,
     publishDate: piece.publishDate ? piece.publishDate.toISOString() : null,
+    instagramUrl: piece.instagramUrl,
+    facebookUrl: piece.facebookUrl,
   };
 
   return (

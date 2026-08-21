@@ -30,6 +30,8 @@ export type ContentPieceInput = {
   notes?: string | null;
   status?: string;
   publishDate?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
 };
 
 export async function createContent(data: ContentPieceInput) {
@@ -56,6 +58,8 @@ export async function createContent(data: ContentPieceInput) {
       notes: data.notes || null,
       status: data.status || "IDEA",
       publishDate: data.publishDate ? new Date(data.publishDate) : null,
+      instagramUrl: data.instagramUrl || null,
+      facebookUrl: data.facebookUrl || null,
     },
   });
   touch();
@@ -86,6 +90,13 @@ export async function updateContent(id: number, data: Partial<ContentPieceInput>
       ...(data.status !== undefined ? { status: data.status } : {}),
       ...(data.publishDate !== undefined
         ? { publishDate: data.publishDate ? new Date(data.publishDate) : null }
+        : {}),
+      // Cambiar la URL invalida el ID resuelto: el próximo sync la vuelve a resolver.
+      ...(data.instagramUrl !== undefined
+        ? { instagramUrl: data.instagramUrl || null, instagramMediaId: null }
+        : {}),
+      ...(data.facebookUrl !== undefined
+        ? { facebookUrl: data.facebookUrl || null, facebookPostId: null }
         : {}),
     },
   });
